@@ -426,7 +426,7 @@ jobs:
   test-tinystories-executorch:
     strategy:
       matrix:
-        runner: [16-core-ubuntu, macos-14-xlarge]
+        runner: [ubuntu-latest]
     runs-on: ${{matrix.runner}}
     steps:
       - name: Checkout repo
@@ -867,7 +867,7 @@ jobs:
   runner-et:
     strategy:
       matrix:
-        runner: [16-core-ubuntu, macos-14-xlarge]
+        runner: [ubuntu-latest]
     runs-on: ${{matrix.runner}}
     steps:
       - name: Checkout repo
