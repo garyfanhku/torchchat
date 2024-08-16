@@ -423,7 +423,169 @@ jobs:
   #       bash .ci/scripts/validate.sh "./checkpoints/${REPO_NAME}/model.pth" "cuda" "eval_sanity_check"
   #       echo "::endgroup::"
 
-  test-tinystories-executorch:
+  # test-tinystories-executorch:
+  #   strategy:
+  #     matrix:
+  #       runner: [ubuntu-latest]
+  #   runs-on: ${{matrix.runner}}
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v2
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.10.11
+  #     - name: Setup Xcode
+  #       if: runner.os == 'macOS'
+  #       uses: maxim-lobanov/setup-xcode@v1
+  #       with:
+  #         xcode-version: '15.3'
+  #     - name: Print machine info
+  #       run: |
+  #         uname -a
+  #         if [ $(uname -s) == Darwin ]; then
+  #           sysctl machdep.cpu.brand_string
+  #           sysctl machdep.cpu.core_count
+  #         fi
+  #     - name: Install requirements
+  #       run: |
+  #         echo "Intalling pip3 packages"
+  #         ./install_requirements.sh
+
+  #         export TORCHCHAT_ROOT=$PWD
+  #         ./scripts/install_et.sh
+
+  #         pip3 list
+  #         python3 -c 'import torch;print(f"torch: {torch.__version__, torch.version.git_version}")'
+  #         python3 -c 'import torchvision;print(f"torchvision: {torchvision.__version__, torchvision.version.git_version}")'
+  #         python3 -c 'import torchaudio;print(f"torchaudio: {torchaudio.__version__, torchaudio.version.git_version}")'
+
+  #         cd ../..
+  #         echo "Inside: ${PWD}"
+  #     - name: Download checkpoints
+  #       run: |
+  #         mkdir -p checkpoints/stories15M
+  #         pushd checkpoints/stories15M
+  #         wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories15M.pt
+  #         wget https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
+  #         popd
+
+  #         mkdir gguf_files
+  #         export GGUF_PATH=gguf_files/TinyLlama-1.1B-openorca.Q4_0.gguf
+  #         export GGUF_TOKENIZER_PATH=gguf_files/tokenizer.model
+  #         wget -O ${GGUF_PATH} "https://huggingface.co/TheBloke/TinyLlama-1.1B-1T-OpenOrca-GGUF/resolve/main/tinyllama-1.1b-1t-openorca.Q4_0.gguf?download=true"
+  #         wget -O ${GGUF_TOKENIZER_PATH} https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
+
+  #     - name: Run inference
+  #       run: |
+  #         export MODEL_PATH=${PWD}/checkpoints/stories15M/stories15M.pt
+  #         export MODEL_NAME=stories15M
+
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0  --device cpu
+
+  #         python export.py --checkpoint-path ${MODEL_PATH} --output-pte-path ${PWD}/${MODEL_NAME}.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${PWD}/${MODEL_NAME}.pte
+
+  #         echo "Tests complete."
+
+  #     - name: upload vanilla .pte
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: exported-pte
+  #         path: ${PWD}/${MODEL_NAME}.pte
+
+  #     - name: Run inference
+  #       run: |
+  #         export MODEL_PATH=checkpoints/stories15M/stories15M.pt
+  #         export MODEL_NAME=stories15M
+  #         export MODEL_DIR=/tmp
+
+  #         echo "******************************************"
+  #         echo "***               vanilla              ***"
+  #         echo "******************************************"
+  #         python export.py --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
+
+  #         echo "******************************************"
+  #         echo "*** --quantize config/data/mobile.json ***"
+  #         echo "******************************************"
+  #         # python export.py --quantize config/data/mobile.json --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
+  #         # python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
+
+
+  #         echo "******************************************"
+  #         echo "******* Emb: channel-wise quantized ******"
+  #         echo "******************************************"
+  #         python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 0}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-g0.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-g0.pte
+
+  #         echo "******************************************"
+  #         echo "******** Emb: group-wise quantized *******"
+  #         echo "******************************************"
+  #         python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 8}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-g8.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-g8.pte
+
+  #         echo "******************************************"
+  #         echo "**** Emb 4bit: channel-wise quantized ****"
+  #         echo "******************************************"
+  #         python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 0}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-e4g0.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-e4g0.pte
+
+  #         echo "******************************************"
+  #         echo "****** Emb 4bit: group-wise quantized ****"
+  #         echo "******************************************"
+  #         python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 8}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-e4g8.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-e4g8.pte
+
+  #         echo "******************************************"
+  #         echo "******* INT8 channel-wise quantized ******"
+  #         echo "******************************************"
+  #         python export.py --quant '{"linear:int8" : {"bitwidth": 8, "groupsize": 0}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-l8g0.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-l8g0.pte
+
+  #         echo "******************************************"
+  #         echo "******** INT8 group-wise quantized *******"
+  #         echo "******************************************"
+  #         python export.py --quant '{"linear:int8" : {"bitwidth": 8, "groupsize": 8}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-l8g8.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-l8g8.pte
+
+  #         echo "******************************************"
+  #         echo "******** ET: a8w4dq INT4 group-wise quantized *******"
+  #         echo "******************************************"
+  #         python export.py --quant '{"linear:a8w4dq" : {"groupsize": 32}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-a8w4dq.pte
+  #         python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-a8w4dq.pte
+
+  #         echo "******************************************"
+  #         echo "******** INT4 group-wise quantized *******"
+  #         echo "******************************************"
+  #         # python export.py --quant '{"linear:int4" : {"groupsize": 32}}' --tokenizer-path ${TOKENIZER_PATH} --gguf-path ${GGUF_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}-li4.pte
+  #         # python3 torchchat.py generate --tokenizer-path ${TOKENIZER_PATH} --gguf-path ${GGUF_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}-li4.pte
+
+  #         echo "tests complete"
+  #         echo "******************************************"
+
+  #     - name: upload quant pte
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: exported-quant-ptes
+  #         path: ${MODEL_DIR}
+
+  #     - name: Run GGUF export + inference
+  #       run: |
+  #         export GGUF_PATH=gguf_files/TinyLlama-1.1B-openorca.Q4_0.gguf
+  #         export GGUF_TOKENIZER_PATH=gguf_files/tokenizer.model
+
+  #         python torchchat.py export --gguf-path ${GGUF_PATH} --output-pte-path ${PWD}/${MODEL_NAME}.pte
+  #         python torchchat.py generate --gguf-path ${GGUF_PATH} --pte-path ${PWD}/${MODEL_NAME}.pte --tokenizer-path ${GGUF_TOKENIZER_PATH} --temperature 0 --max-new-tokens 20
+
+  #         echo "Tests complete."
+  #     - name: upload GGUF
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: gguf-export
+  #         path: gguf_files/
+
+  test-llama3-executorch:
     strategy:
       matrix:
         runner: [ubuntu-latest]
@@ -462,111 +624,43 @@ jobs:
 
           cd ../..
           echo "Inside: ${PWD}"
-      - name: Download checkpoints
-        run: |
-          mkdir -p checkpoints/stories15M
-          pushd checkpoints/stories15M
-          wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories15M.pt
-          wget https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
-          popd
+      # - name: Download checkpoints
+      #   run: |
+      #     mkdir -p checkpoints/stories15M
+      #     pushd checkpoints/stories15M
+      #     wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories15M.pt
+      #     wget https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
+      #     popd
 
-          mkdir gguf_files
-          export GGUF_PATH=gguf_files/TinyLlama-1.1B-openorca.Q4_0.gguf
-          export GGUF_TOKENIZER_PATH=gguf_files/tokenizer.model
-          wget -O ${GGUF_PATH} "https://huggingface.co/TheBloke/TinyLlama-1.1B-1T-OpenOrca-GGUF/resolve/main/tinyllama-1.1b-1t-openorca.Q4_0.gguf?download=true"
-          wget -O ${GGUF_TOKENIZER_PATH} https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
-
-      - name: Run inference
-        run: |
-          export MODEL_PATH=${PWD}/checkpoints/stories15M/stories15M.pt
-          export MODEL_NAME=stories15M
-
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0  --device cpu
-
-          python export.py --checkpoint-path ${MODEL_PATH} --output-pte-path ${PWD}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${PWD}/${MODEL_NAME}.pte
-
-          echo "Tests complete."
+      #     mkdir gguf_files
+      #     export GGUF_PATH=gguf_files/TinyLlama-1.1B-openorca.Q4_0.gguf
+      #     export GGUF_TOKENIZER_PATH=gguf_files/tokenizer.model
+      #     wget -O ${GGUF_PATH} "https://huggingface.co/TheBloke/TinyLlama-1.1B-1T-OpenOrca-GGUF/resolve/main/tinyllama-1.1b-1t-openorca.Q4_0.gguf?download=true"
+      #     wget -O ${GGUF_TOKENIZER_PATH} https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
 
       - name: Run inference
         run: |
-          export MODEL_PATH=checkpoints/stories15M/stories15M.pt
-          export MODEL_NAME=stories15M
-          export MODEL_DIR=/tmp
-
-          echo "******************************************"
-          echo "***               vanilla              ***"
-          echo "******************************************"
-          python export.py --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "*** --quantize config/data/mobile.json ***"
-          echo "******************************************"
-          # python export.py --quantize config/data/mobile.json --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          # python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-
-          echo "******************************************"
-          echo "******* Emb: channel-wise quantized ******"
-          echo "******************************************"
-          python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 0}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "******** Emb: group-wise quantized *******"
-          echo "******************************************"
-          python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 8}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "**** Emb 4bit: channel-wise quantized ****"
-          echo "******************************************"
-          python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 0}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "****** Emb 4bit: group-wise quantized ****"
-          echo "******************************************"
-          python export.py --quant '{"embedding" : {"bitwidth": 8, "groupsize": 8}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "******* INT8 channel-wise quantized ******"
-          echo "******************************************"
-          python export.py --quant '{"linear:int8" : {"bitwidth": 8, "groupsize": 0}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "******** INT8 group-wise quantized *******"
-          echo "******************************************"
-          python export.py --quant '{"linear:int8" : {"bitwidth": 8, "groupsize": 8}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "******** ET: a8w4dq INT4 group-wise quantized *******"
-          echo "******************************************"
-          python export.py --quant '{"linear:a8w4dq" : {"groupsize": 32}}' --checkpoint-path ${MODEL_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          python3 torchchat.py generate --checkpoint-path ${MODEL_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "******************************************"
-          echo "******** INT4 group-wise quantized *******"
-          echo "******************************************"
-          # python export.py --quant '{"linear:int4" : {"groupsize": 32}}' --tokenizer-path ${TOKENIZER_PATH} --gguf-path ${GGUF_PATH} --output-pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-          # python3 torchchat.py generate --tokenizer-path ${TOKENIZER_PATH} --gguf-path ${GGUF_PATH} --temperature 0 --pte-path ${MODEL_DIR}/${MODEL_NAME}.pte
-
-          echo "tests complete"
-          echo "******************************************"
-
-      - name: Run GGUF export + inference
-        run: |
-          export GGUF_PATH=gguf_files/TinyLlama-1.1B-openorca.Q4_0.gguf
-          export GGUF_TOKENIZER_PATH=gguf_files/tokenizer.model
-
-          python torchchat.py export --gguf-path ${GGUF_PATH} --output-pte-path ${PWD}/${MODEL_NAME}.pte
-          python torchchat.py generate --gguf-path ${GGUF_PATH} --pte-path ${PWD}/${MODEL_NAME}.pte --tokenizer-path ${GGUF_TOKENIZER_PATH} --temperature 0 --max-new-tokens 20
+          # Export
+          python3 torchchat.py export llama3.1 --quantize config/data/mobile.json --output-pte-path ${PWD}/llama3.1.pte
 
           echo "Tests complete."
+
+      - name: upload mobile .pte
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama31-pte
+          path: ${PWD}/llama3.1.pte 
+
+      - name: upload tokenizer
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama31-tokenizer
+          path: $(python3 torchchat.py where llama3.1)/tokenizer.model
+
+      - name: Run inference
+        run: |
+          python3 torchchat.py eval llama3.1 --pte-path llama3.1.pte --limit 5
+          echo "eval complete."
   # torchchat-command-load-test:
   #   strategy:
   #     matrix:
@@ -864,101 +958,101 @@ jobs:
 
   #         echo "tests complete"
   #         echo "******************************************"
-  runner-et:
-    strategy:
-      matrix:
-        runner: [ubuntu-latest]
-    runs-on: ${{matrix.runner}}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.10.11
-      - name: Setup Xcode
-        if: runner.os == 'macOS'
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.3'
-      - name: Print machine info
-        run: |
-          uname -a
-          if [ $(uname -s) == Darwin ]; then
-            sysctl machdep.cpu.brand_string
-            sysctl machdep.cpu.core_count
-          fi
-      - name: Install torchchat
-        run: |
-          echo "Intalling pip3 packages"
-          ./install_requirements.sh
-          pip3 list
-          python3 -c 'import torch;print(f"torch: {torch.__version__, torch.version.git_version}")'
-      - name: Set ET git sha
-        id: setup-hash
-        run: |
-          export TORCHCHAT_ROOT=${PWD}
-          echo "et-git-hash=$(cat ${TORCHCHAT_ROOT}/.pins/et-pin.txt)" >> "$GITHUB_ENV"
-      - name: Load or install ET
-        id: install-et
-        uses: actions/cache@v3
-        env:
-          cache-key: et-build-${{runner.os}}-${{runner.arch}}-${{env.et-git-hash}}
-        with:
-          path: ./et-build
-          key: ${{env.cache-key}}
-          restore-keys: |
-            ${{env.cache-key}}
-      - if: ${{ steps.install-et.outputs.cache-hit != 'true' }}
-        continue-on-error: true
-        run: |
-          echo "Installing ExecuTorch"
-          bash scripts/build_native.sh et
-      - name: Install ET pip
-        run: |
-          echo "ET build directory"
-          ls et-build | cat
+  # runner-et:
+  #   strategy:
+  #     matrix:
+  #       runner: [ubuntu-latest]
+  #   runs-on: ${{matrix.runner}}
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v3
+  #       with:
+  #         submodules: true
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.10.11
+  #     - name: Setup Xcode
+  #       if: runner.os == 'macOS'
+  #       uses: maxim-lobanov/setup-xcode@v1
+  #       with:
+  #         xcode-version: '15.3'
+  #     - name: Print machine info
+  #       run: |
+  #         uname -a
+  #         if [ $(uname -s) == Darwin ]; then
+  #           sysctl machdep.cpu.brand_string
+  #           sysctl machdep.cpu.core_count
+  #         fi
+  #     - name: Install torchchat
+  #       run: |
+  #         echo "Intalling pip3 packages"
+  #         ./install_requirements.sh
+  #         pip3 list
+  #         python3 -c 'import torch;print(f"torch: {torch.__version__, torch.version.git_version}")'
+  #     - name: Set ET git sha
+  #       id: setup-hash
+  #       run: |
+  #         export TORCHCHAT_ROOT=${PWD}
+  #         echo "et-git-hash=$(cat ${TORCHCHAT_ROOT}/.pins/et-pin.txt)" >> "$GITHUB_ENV"
+  #     - name: Load or install ET
+  #       id: install-et
+  #       uses: actions/cache@v3
+  #       env:
+  #         cache-key: et-build-${{runner.os}}-${{runner.arch}}-${{env.et-git-hash}}
+  #       with:
+  #         path: ./et-build
+  #         key: ${{env.cache-key}}
+  #         restore-keys: |
+  #           ${{env.cache-key}}
+  #     - if: ${{ steps.install-et.outputs.cache-hit != 'true' }}
+  #       continue-on-error: true
+  #       run: |
+  #         echo "Installing ExecuTorch"
+  #         bash scripts/build_native.sh et
+  #     - name: Install ET pip
+  #       run: |
+  #         echo "ET build directory"
+  #         ls et-build | cat
 
-          pushd et-build/src/executorch
-          if [ $(git rev-parse HEAD) != ${{env.et-git-hash}} ]; then
-            echo "Mismatched hash.  Make sure branch install_et.sh matches branch from Github cache."
-            echo "On commit $(git rev-parse HEAD)"
-            echo "Expected commit ${{env.et-git-hash}}"
-            exit 1
-          fi
-          pip install .
-          popd
-      - name: Install runner
-        run: |
-          # Pull submodules (re2, abseil) for Tiktoken
-          git submodule sync
-          git submodule update --init
+  #         pushd et-build/src/executorch
+  #         if [ $(git rev-parse HEAD) != ${{env.et-git-hash}} ]; then
+  #           echo "Mismatched hash.  Make sure branch install_et.sh matches branch from Github cache."
+  #           echo "On commit $(git rev-parse HEAD)"
+  #           echo "Expected commit ${{env.et-git-hash}}"
+  #           exit 1
+  #         fi
+  #         pip install .
+  #         popd
+  #     - name: Install runner
+  #       run: |
+  #         # Pull submodules (re2, abseil) for Tiktoken
+  #         git submodule sync
+  #         git submodule update --init
 
-          export TORCHCHAT_ROOT=${PWD}
-          cmake -S . -B ./cmake-out -G Ninja
-          cmake --build ./cmake-out --target et_run
+  #         export TORCHCHAT_ROOT=${PWD}
+  #         cmake -S . -B ./cmake-out -G Ninja
+  #         cmake --build ./cmake-out --target et_run
 
-      - name: Run inference
-        run: |
-          python torchchat.py download stories15M
-          wget -O ./tokenizer.model https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
+  #     - name: Run inference
+  #       run: |
+  #         python torchchat.py download stories15M
+  #         wget -O ./tokenizer.model https://github.com/karpathy/llama2.c/raw/master/tokenizer.model
 
-          export PRMT="Once upon a time in a land far away"
+  #         export PRMT="Once upon a time in a land far away"
 
-          python torchchat.py generate stories15M --temperature 0 --prompt "${PRMT}"  --device cpu
+  #         python torchchat.py generate stories15M --temperature 0 --prompt "${PRMT}"  --device cpu
 
-          python torchchat.py export stories15M --output-pte-path ./model.pte
-          ./cmake-out/et_run ./model.pte -z ./tokenizer.model -t 0 -i "${PRMT}"
+  #         python torchchat.py export stories15M --output-pte-path ./model.pte
+  #         ./cmake-out/et_run ./model.pte -z ./tokenizer.model -t 0 -i "${PRMT}"
 
-          for dtype in fp32 fp16; do   # bf16 needs to be supported
-            echo "Testing export + runner with dtype=$dtype"
-            python torchchat.py export stories15M --dtype $dtype --output-pte-path ./model.pte
-            ./cmake-out/et_run ./model.pte -z ./tokenizer.model -t 0 -i "${PRMT}"
-          done
+  #         for dtype in fp32 fp16; do   # bf16 needs to be supported
+  #           echo "Testing export + runner with dtype=$dtype"
+  #           python torchchat.py export stories15M --dtype $dtype --output-pte-path ./model.pte
+  #           ./cmake-out/et_run ./model.pte -z ./tokenizer.model -t 0 -i "${PRMT}"
+  #         done
 
-          echo "Tests complete."
+  #         echo "Tests complete."
   # runner-aoti:
   #   strategy:
   #     matrix:
